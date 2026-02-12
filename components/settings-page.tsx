@@ -6,10 +6,19 @@ import { Crown, User, Bell, Shield, CreditCard, LogOut } from "lucide-react"
 import { ProBadge } from "./pro-badge"
 import { useState } from "react"
 import { SubscriptionPaywall } from "./subscription-paywall"
+import { createSupabaseBrowserClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export function SettingsPage() {
   const [showPaywall, setShowPaywall] = useState(false)
   const [isPro] = useState(false) // Mock subscription status
+  const router = useRouter()
+
+  const handleSignOut = async () => {
+    const supabase = createSupabaseBrowserClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -83,7 +92,7 @@ export function SettingsPage() {
       <Card className="p-6 border-destructive/20">
         <h3 className="font-semibold mb-4">Danger Zone</h3>
         <div className="space-y-3">
-          <Button variant="destructive" className="gap-2">
+          <Button variant="destructive" className="gap-2" onClick={handleSignOut}>
             <LogOut className="w-4 h-4" />
             Sign Out
           </Button>

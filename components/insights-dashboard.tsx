@@ -32,8 +32,8 @@ export function InsightsDashboard() {
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold mb-2">AI-Powered Insight</h3>
             <p className="text-balance leading-relaxed mb-4">
-              Over the past week, I've noticed a positive shift in your emotional state. Your entries show increased
-              gratitude practice and self-compassion. You're writing more about personal growth and setting healthy
+              Over the past week, I&apos;ve noticed a positive shift in your emotional state. Your entries show increased
+              gratitude practice and self-compassion. You&apos;re writing more about personal growth and setting healthy
               boundaries - signs of meaningful progress.
             </p>
             <Button variant="outline" size="sm" className="gap-2 bg-transparent">

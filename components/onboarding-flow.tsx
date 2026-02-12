@@ -41,7 +41,7 @@ export function OnboardingFlow() {
             </div>
             <h1 className="text-3xl font-bold mb-4 text-balance">Welcome to Mindful Journal</h1>
             <p className="text-lg text-muted-foreground mb-8 text-balance">
-              Your safe space for daily reflection, personal growth, and mental wellness. Let's personalize your
+              Your safe space for daily reflection, personal growth, and mental wellness. Let&apos;s personalize your
               experience.
             </p>
             <Button size="lg" onClick={() => setStep("name")} className="gap-2">
@@ -167,7 +167,7 @@ export function OnboardingFlow() {
                 <div className="w-8 h-1 bg-muted rounded-full" />
               </div>
               <h2 className="text-2xl font-bold mb-2">When do you prefer to journal?</h2>
-              <p className="text-muted-foreground">We'll send you gentle reminders</p>
+              <p className="text-muted-foreground">We&apos;ll send you gentle reminders</p>
             </div>
 
             <div className="space-y-3 mb-8">
@@ -216,12 +216,12 @@ export function OnboardingFlow() {
               <div className="w-20 h-20 rounded-2xl bg-primary/20 mx-auto mb-6 flex items-center justify-center">
                 <Heart className="w-10 h-10 text-primary" />
               </div>
-              <h2 className="text-3xl font-bold mb-4 text-balance">You're all set, {displayName}!</h2>
+              <h2 className="text-3xl font-bold mb-4 text-balance">You&apos;re all set, {displayName}!</h2>
               <p className="text-lg text-muted-foreground mb-2 text-balance">
                 Your journal is ready for your first entry
               </p>
               <p className="text-muted-foreground text-balance">
-                Remember: There's no right or wrong way to journal. Just write from your heart.
+                Remember: There&apos;s no right or wrong way to journal. Just write from your heart.
               </p>
             </div>
 

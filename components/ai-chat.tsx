@@ -33,11 +33,27 @@ const suggestedPrompts = [
   "I need help processing my emotions",
 ]
 
+let messageIdCounter = 0
+
+const nextMessageId = () => {
+  messageIdCounter += 1
+  return messageIdCounter.toString()
+}
+
+const hashString = (value: string) => {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash)
+}
+
 export function AIChat() {
   const [messages, setMessages] = useState<Message[]>([welcomeMessage])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [messageCount, setMessageCount] = useState(1)
+  const [messageCount, setMessageCount] = useState(0)
   const [showPaywall, setShowPaywall] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const FREE_MESSAGE_LIMIT = 5
@@ -58,7 +74,7 @@ export function AIChat() {
     }
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: nextMessageId(),
       role: "user",
       content: content.trim(),
       timestamp: new Date(),
@@ -72,7 +88,7 @@ export function AIChat() {
     // Simulate AI response - in production, this would call an API
     setTimeout(() => {
       const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
+        id: nextMessageId(),
         role: "assistant",
         content: generateContextualResponse(content),
         timestamp: new Date(),
@@ -91,7 +107,8 @@ export function AIChat() {
       "I remember you wrote about similar feelings last week. It sounds like this is an ongoing theme for you. How do you think your perspective has evolved since then?",
       "Your journal entries show real growth in emotional awareness. Let's explore this together. What specific aspect would you like to focus on?",
     ]
-    return responses[Math.floor(Math.random() * responses.length)]
+    const index = hashString(userInput) % responses.length
+    return responses[index]
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -139,7 +156,7 @@ export function AIChat() {
 
         {/* Chat Messages */}
         <Card className="relative">
-          <ScrollArea className="h-[500px] p-6" ref={scrollRef}>
+          <ScrollArea className="h-[500px] p-6" viewportRef={scrollRef}>
             <div className="space-y-6">
               {messages.map((message) => (
                 <div key={message.id} className={`flex gap-4 ${message.role === "user" ? "justify-end" : ""}`}>
@@ -250,7 +267,7 @@ export function AIChat() {
         <Card className="p-4 bg-muted/50">
           <p className="text-xs text-muted-foreground leading-relaxed">
             <strong>Note:</strong> This AI companion provides supportive reflection and is not a substitute for
-            professional mental health care. If you're experiencing a crisis, please contact a mental health
+            professional mental health care. If you&apos;re experiencing a crisis, please contact a mental health
             professional or crisis helpline immediately.
           </p>
         </Card>

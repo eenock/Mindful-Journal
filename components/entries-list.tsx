@@ -6,34 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Edit3, Search, CalendarIcon, Trash2 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-
-// Mock data - will be replaced with real database queries
-const mockEntries = [
-  {
-    id: "1",
-    date: new Date(),
-    title: "Morning reflections",
-    preview: "Started the day with gratitude practice. Feeling centered and ready to face the challenges ahead...",
-    mood: "good",
-    wordCount: 324,
-  },
-  {
-    id: "2",
-    date: new Date(Date.now() - 86400000),
-    title: "Evening thoughts",
-    preview: "Reflected on the challenges I faced today. Learning to be more patient with myself...",
-    mood: "okay",
-    wordCount: 456,
-  },
-  {
-    id: "3",
-    date: new Date(Date.now() - 172800000),
-    title: "Midday check-in",
-    preview: "Feeling more grounded after meditation. The breathing exercises really help...",
-    mood: "great",
-    wordCount: 198,
-  },
-]
+import { useEntries } from "@/hooks/use-entries"
 
 interface EntriesListProps {
   onEditEntry?: (entryId: string) => void
@@ -41,12 +14,12 @@ interface EntriesListProps {
 
 export function EntriesList({ onEditEntry }: EntriesListProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const [entries] = useState(mockEntries)
+  const { entries, loading, error, deleteEntry, refresh } = useEntries()
 
   const filteredEntries = entries.filter(
     (entry) =>
-      entry.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      entry.preview.toLowerCase().includes(searchQuery.toLowerCase()),
+      (entry.title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.content.toLowerCase().includes(searchQuery.toLowerCase()),
   )
 
   const formatDate = (date: Date) => {
@@ -87,7 +60,22 @@ export function EntriesList({ onEditEntry }: EntriesListProps) {
 
       {/* Entries */}
       <div className="space-y-3">
-        {filteredEntries.length === 0 ? (
+        {loading ? (
+          <Card className="p-12 text-center">
+            <CalendarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Loading entries</h3>
+            <p className="text-muted-foreground">Fetching your journal history...</p>
+          </Card>
+        ) : error ? (
+          <Card className="p-12 text-center">
+            <CalendarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Unable to load entries</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button variant="outline" onClick={refresh}>
+              Try again
+            </Button>
+          </Card>
+        ) : filteredEntries.length === 0 ? (
           <Card className="p-12 text-center">
             <CalendarIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-2">No entries found</h3>
@@ -104,14 +92,16 @@ export function EntriesList({ onEditEntry }: EntriesListProps) {
                   className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
                 >
                   <div className="flex items-center gap-2 mb-2">
-                    <p className="text-sm text-muted-foreground">{formatDate(entry.date)}</p>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getMoodColor(entry.mood)}`}>
-                      {entry.mood}
-                    </span>
+                    <p className="text-sm text-muted-foreground">{formatDate(new Date(entry.created_at))}</p>
+                    {entry.mood && (
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getMoodColor(entry.mood)}`}>
+                        {entry.mood}
+                      </span>
+                    )}
                   </div>
                   <p className="font-medium mb-1">{entry.title || "Untitled"}</p>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{entry.preview}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{entry.wordCount} words</p>
+                  <p className="text-sm text-muted-foreground line-clamp-2">{entry.content}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{entry.word_count} words</p>
                 </button>
 
                 <DropdownMenu>
@@ -125,7 +115,13 @@ export function EntriesList({ onEditEntry }: EntriesListProps) {
                       <Edit3 className="w-4 h-4 mr-2" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-destructive">
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={async () => {
+                        await deleteEntry(entry.id)
+                        await refresh()
+                      }}
+                    >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Delete
                     </DropdownMenuItem>

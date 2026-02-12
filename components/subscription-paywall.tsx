@@ -104,7 +104,7 @@ export function SubscriptionPaywall({ feature = "this feature", onClose }: Subsc
               <span className="text-muted-foreground">/ {plans[selectedPlan].period}</span>
             </div>
             {selectedPlan === "yearly" && (
-              <p className="text-sm text-muted-foreground">That's just $3.33/month, billed annually</p>
+              <p className="text-sm text-muted-foreground">That&apos;s just $3.33/month, billed annually</p>
             )}
           </div>
 
@@ -112,7 +112,7 @@ export function SubscriptionPaywall({ feature = "this feature", onClose }: Subsc
           <div className="mb-8">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              What's included:
+              What&apos;s included:
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {proFeatures.map((feature, i) => (
@@ -133,7 +133,7 @@ export function SubscriptionPaywall({ feature = "this feature", onClose }: Subsc
               {isLoading ? "Processing..." : "Start Free 7-Day Trial"}
             </Button>
             <p className="text-xs text-center text-muted-foreground">
-              Cancel anytime. No commitment. Your card won't be charged until after the trial.
+              Cancel anytime. No commitment. Your card won&apos;t be charged until after the trial.
             </p>
             {onClose && (
               <Button variant="ghost" size="sm" className="w-full" onClick={onClose}>

@@ -14,6 +14,7 @@ import { AIChat } from "./ai-chat"
 import { InsightsDashboard } from "./insights-dashboard"
 import { SettingsPage } from "./settings-page"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useEntries } from "@/hooks/use-entries"
 
 type View = "dashboard" | "write" | "entries" | "insights" | "chat" | "settings"
 
@@ -162,6 +163,16 @@ export function JournalDashboard() {
 }
 
 function DashboardView({ setView }: { setView: (view: View) => void }) {
+  const { entries, loading } = useEntries({ limit: 3 })
+  const latestEntry = entries[0]
+  const latestMood = latestEntry?.mood ?? null
+  const lastUpdated = latestEntry
+    ? new Date(latestEntry.created_at).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })
+    : null
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Welcome Section */}
@@ -184,7 +195,7 @@ function DashboardView({ setView }: { setView: (view: View) => void }) {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <StreakCounter />
-            <MoodTracker />
+            <MoodTracker latestMood={latestMood} lastUpdated={lastUpdated} />
           </div>
 
           {/* Daily Prompt */}
@@ -206,25 +217,33 @@ function DashboardView({ setView }: { setView: (view: View) => void }) {
           </Button>
         </div>
         <div className="space-y-3">
-          {[
-            { date: "Today", title: "Morning reflections", preview: "Started the day with gratitude practice..." },
-            { date: "Yesterday", title: "Evening thoughts", preview: "Reflected on the challenges I faced..." },
-            { date: "2 days ago", title: "Midday check-in", preview: "Feeling more grounded after meditation..." },
-          ].map((entry, i) => (
-            <button
-              key={i}
-              className="w-full text-left p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/5 transition-colors"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-muted-foreground mb-1">{entry.date}</p>
-                  <p className="font-medium mb-1">{entry.title}</p>
-                  <p className="text-sm text-muted-foreground truncate">{entry.preview}</p>
+          {loading ? (
+            <div className="text-sm text-muted-foreground">Loading recent entries...</div>
+          ) : entries.length === 0 ? (
+            <div className="text-sm text-muted-foreground">No entries yet. Start with a new entry.</div>
+          ) : (
+            entries.map((entry) => (
+              <button
+                key={entry.id}
+                onClick={() => setView("entries")}
+                className="w-full text-left p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-accent/5 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-muted-foreground mb-1">
+                      {new Date(entry.created_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </p>
+                    <p className="font-medium mb-1">{entry.title || "Untitled"}</p>
+                    <p className="text-sm text-muted-foreground truncate">{entry.content}</p>
+                  </div>
+                  <Edit3 className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
                 </div>
-                <Edit3 className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
-              </div>
-            </button>
-          ))}
+              </button>
+            ))
+          )}
         </div>
       </Card>
     </div>

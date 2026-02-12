@@ -1,24 +1,19 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import { Card } from "@/components/ui/card"
 import { Flame, Award, Target } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 
 export function StreakCounter() {
-  const [currentStreak, setCurrentStreak] = useState(7)
-  const [longestStreak, setLongestStreak] = useState(15)
-  const [todayCompleted, setTodayCompleted] = useState(false)
-
-  // Simulate streak data - will be from database in production
-  useEffect(() => {
+  const currentStreak = 7
+  const longestStreak = 15
+  const todayCompleted = (() => {
     const lastEntryDate = new Date()
     lastEntryDate.setHours(0, 0, 0, 0)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-
-    setTodayCompleted(lastEntryDate.getTime() === today.getTime())
-  }, [])
+    return lastEntryDate.getTime() === today.getTime()
+  })()
 
   const nextMilestone = currentStreak < 7 ? 7 : currentStreak < 30 ? 30 : currentStreak < 100 ? 100 : 365
   const progressToMilestone = (currentStreak / nextMilestone) * 100

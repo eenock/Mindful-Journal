@@ -12,8 +12,13 @@ import { MoodSelector } from "./mood-selector"
 import { useToast } from "@/hooks/use-toast"
 import { SubscriptionPaywall } from "./subscription-paywall"
 import { ProBadge } from "./pro-badge"
+import type { EntryInput } from "@/lib/validators/entry"
 
-export function JournalEntryEditor() {
+interface JournalEntryEditorProps {
+  onSaved?: () => void
+}
+
+export function JournalEntryEditor({ onSaved }: JournalEntryEditorProps) {
   const [title, setTitle] = useState("")
   const [content, setContent] = useState("")
   const [selectedMood, setSelectedMood] = useState<string>("")
@@ -44,22 +49,44 @@ export function JournalEntryEditor() {
     }
 
     setIsSaving(true)
-    console.log("[v0] Saving entry:", { title, content, mood: selectedMood })
 
-    // Simulate save delay
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    const payload: EntryInput = {
+      title: title.trim() ? title.trim() : null,
+      content: content.trim(),
+      mood: selectedMood || null,
+      word_count: wordCount,
+    }
 
-    toast({
-      title: "Entry saved",
-      description: "Your journal entry has been saved successfully",
-    })
+    try {
+      const response = await fetch("/api/entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
 
-    setIsSaving(false)
-    // Clear form after save
-    setTitle("")
-    setContent("")
-    setSelectedMood("")
-    setWordCount(0)
+      if (!response.ok) {
+        throw new Error("Failed to save entry")
+      }
+
+      toast({
+        title: "Entry saved",
+        description: "Your journal entry has been saved successfully",
+      })
+
+      setTitle("")
+      setContent("")
+      setSelectedMood("")
+      setWordCount(0)
+      onSaved?.()
+    } catch (error) {
+      toast({
+        title: "Save failed",
+        description: error instanceof Error ? error.message : "Unable to save entry",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const getAISuggestions = () => {

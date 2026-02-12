@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Lightbulb, RefreshCw, Sparkles } from "lucide-react"
@@ -63,15 +63,14 @@ interface DailyPromptProps {
 }
 
 export function DailyPrompt({ onStartWriting }: DailyPromptProps) {
-  const [currentPrompt, setCurrentPrompt] = useState(prompts[0])
-  const [isRefreshing, setIsRefreshing] = useState(false)
-
-  useEffect(() => {
-    // Get daily prompt based on date
+  const getDailyPrompt = () => {
     const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000)
     const promptIndex = dayOfYear % prompts.length
-    setCurrentPrompt(prompts[promptIndex])
-  }, [])
+    return prompts[promptIndex]
+  }
+
+  const [currentPrompt, setCurrentPrompt] = useState(getDailyPrompt)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const refreshPrompt = () => {
     setIsRefreshing(true)
@@ -99,7 +98,7 @@ export function DailyPrompt({ onStartWriting }: DailyPromptProps) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <h3 className="font-semibold">Today's Prompt</h3>
+            <h3 className="font-semibold">Today&apos;s Prompt</h3>
             <span
               className={`px-2 py-0.5 rounded-full text-xs font-medium ${getDifficultyColor(currentPrompt.difficulty)}`}
             >
