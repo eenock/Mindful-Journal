@@ -4,6 +4,7 @@ import type { EntryInput } from "@/lib/validators/entry"
 
 interface UseEntriesOptions {
   limit?: number
+  refreshKey?: string | number
 }
 
 export function useEntries(options: UseEntriesOptions = {}) {
@@ -53,7 +54,7 @@ export function useEntries(options: UseEntriesOptions = {}) {
 
   useEffect(() => {
     fetchEntries()
-  }, [fetchEntries])
+  }, [fetchEntries, options.refreshKey])
 
   return {
     entries,

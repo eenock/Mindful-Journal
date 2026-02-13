@@ -10,11 +10,12 @@ import { useEntries } from "@/hooks/use-entries"
 
 interface EntriesListProps {
   onEditEntry?: (entryId: string) => void
+  refreshKey?: number
 }
 
-export function EntriesList({ onEditEntry }: EntriesListProps) {
+export function EntriesList({ onEditEntry, refreshKey }: EntriesListProps) {
   const [searchQuery, setSearchQuery] = useState("")
-  const { entries, loading, error, deleteEntry, refresh } = useEntries()
+  const { entries, loading, error, deleteEntry, refresh } = useEntries({ refreshKey })
 
   const filteredEntries = entries.filter(
     (entry) =>

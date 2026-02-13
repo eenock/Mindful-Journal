@@ -1,19 +1,45 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Flame, Award, Target } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 
 export function StreakCounter() {
-  const currentStreak = 7
-  const longestStreak = 15
-  const todayCompleted = (() => {
-    const lastEntryDate = new Date()
-    lastEntryDate.setHours(0, 0, 0, 0)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return lastEntryDate.getTime() === today.getTime()
-  })()
+  const [currentStreak, setCurrentStreak] = useState(0)
+  const [longestStreak, setLongestStreak] = useState(0)
+  const [todayCompleted, setTodayCompleted] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let active = true
+
+    const loadStreak = async () => {
+      try {
+        const response = await fetch("/api/streak")
+        if (!response.ok) return
+        const data = (await response.json()) as {
+          currentStreak: number
+          longestStreak: number
+          todayCompleted: boolean
+        }
+        if (!active) return
+        setCurrentStreak(data.currentStreak)
+        setLongestStreak(data.longestStreak)
+        setTodayCompleted(data.todayCompleted)
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    void loadStreak()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const nextMilestone = currentStreak < 7 ? 7 : currentStreak < 30 ? 30 : currentStreak < 100 ? 100 : 365
   const progressToMilestone = (currentStreak / nextMilestone) * 100
@@ -39,7 +65,7 @@ export function StreakCounter() {
         </div>
 
         <div className="flex items-baseline gap-2 mb-3">
-          <p className="text-4xl font-bold">{currentStreak}</p>
+          <p className="text-4xl font-bold">{loading ? "—" : currentStreak}</p>
           <p className="text-muted-foreground">days</p>
         </div>
 

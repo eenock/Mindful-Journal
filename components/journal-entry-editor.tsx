@@ -13,19 +13,41 @@ import { useToast } from "@/hooks/use-toast"
 import { SubscriptionPaywall } from "./subscription-paywall"
 import { ProBadge } from "./pro-badge"
 import type { EntryInput } from "@/lib/validators/entry"
+import type { JournalEntry } from "@/lib/types"
 
 interface JournalEntryEditorProps {
+  initialEntry?: JournalEntry | null
   onSaved?: () => void
+  onCancelEdit?: () => void
 }
 
-export function JournalEntryEditor({ onSaved }: JournalEntryEditorProps) {
-  const [title, setTitle] = useState("")
-  const [content, setContent] = useState("")
-  const [selectedMood, setSelectedMood] = useState<string>("")
+export function JournalEntryEditor({ initialEntry, onSaved, onCancelEdit }: JournalEntryEditorProps) {
+  const [title, setTitle] = useState(() => initialEntry?.title ?? "")
+  const [content, setContent] = useState(() => initialEntry?.content ?? "")
+  const [selectedMood, setSelectedMood] = useState<string>(() => initialEntry?.mood ?? "")
   const [isSaving, setIsSaving] = useState(false)
-  const [wordCount, setWordCount] = useState(0)
+  const [wordCount, setWordCount] = useState(() => initialEntry?.word_count ?? 0)
   const [showPaywall, setShowPaywall] = useState(false)
   const { toast } = useToast()
+
+  const isEditing = Boolean(initialEntry?.id)
+
+  const applyPaste = (
+    event: React.ClipboardEvent<HTMLInputElement | HTMLTextAreaElement>,
+    setter: (value: string) => void,
+  ) => {
+    event.preventDefault()
+    const pasteText = event.clipboardData.getData("text")
+    const target = event.currentTarget
+    const start = target.selectionStart ?? target.value.length
+    const end = target.selectionEnd ?? target.value.length
+    const nextValue = target.value.slice(0, start) + pasteText + target.value.slice(end)
+    setter(nextValue)
+    requestAnimationFrame(() => {
+      target.selectionStart = start + pasteText.length
+      target.selectionEnd = start + pasteText.length
+    })
+  }
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value
@@ -58,19 +80,19 @@ export function JournalEntryEditor({ onSaved }: JournalEntryEditorProps) {
     }
 
     try {
-      const response = await fetch("/api/entries", {
-        method: "POST",
+      const response = await fetch(isEditing ? `/api/entries/${initialEntry?.id}` : "/api/entries", {
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
-        throw new Error("Failed to save entry")
+        throw new Error(isEditing ? "Failed to update entry" : "Failed to save entry")
       }
 
       toast({
-        title: "Entry saved",
-        description: "Your journal entry has been saved successfully",
+        title: isEditing ? "Entry updated" : "Entry saved",
+        description: isEditing ? "Your journal entry has been updated" : "Your journal entry has been saved successfully",
       })
 
       setTitle("")
@@ -78,9 +100,10 @@ export function JournalEntryEditor({ onSaved }: JournalEntryEditorProps) {
       setSelectedMood("")
       setWordCount(0)
       onSaved?.()
+      onCancelEdit?.()
     } catch (error) {
       toast({
-        title: "Save failed",
+        title: isEditing ? "Update failed" : "Save failed",
         description: error instanceof Error ? error.message : "Unable to save entry",
         variant: "destructive",
       })
@@ -121,6 +144,7 @@ export function JournalEntryEditor({ onSaved }: JournalEntryEditorProps) {
               placeholder="Entry title (optional)"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onPaste={(event) => applyPaste(event, setTitle)}
               className="text-lg font-medium border-0 px-0 focus-visible:ring-0 placeholder:text-muted-foreground/50"
             />
           </div>
@@ -156,6 +180,7 @@ export function JournalEntryEditor({ onSaved }: JournalEntryEditorProps) {
               placeholder="Start writing... Let your thoughts flow freely."
               value={content}
               onChange={handleContentChange}
+              onPaste={(event) => applyPaste(event, setContent)}
               className="min-h-[400px] border-0 px-0 text-base leading-relaxed resize-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
             />
           </div>
@@ -167,10 +192,17 @@ export function JournalEntryEditor({ onSaved }: JournalEntryEditorProps) {
               AI Suggestions
               <ProBadge />
             </Button>
-            <Button onClick={handleSave} disabled={isSaving || !content.trim()} className="gap-2">
-              <Save className="w-4 h-4" />
-              {isSaving ? "Saving..." : "Save Entry"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {isEditing && (
+                <Button variant="ghost" onClick={onCancelEdit} disabled={isSaving}>
+                  Cancel
+                </Button>
+              )}
+              <Button onClick={handleSave} disabled={isSaving || !content.trim()} className="gap-2">
+                <Save className="w-4 h-4" />
+                {isSaving ? "Saving..." : isEditing ? "Update Entry" : "Save Entry"}
+              </Button>
+            </div>
           </div>
         </div>
       </Card>

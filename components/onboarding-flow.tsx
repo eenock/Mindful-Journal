@@ -25,9 +25,16 @@ export function OnboardingFlow() {
   const [selectedGoals, setSelectedGoals] = useState<string[]>([])
   const [preferredTime, setPreferredTime] = useState("morning")
 
-  const handleComplete = () => {
-    console.log("[v0] Onboarding complete:", { displayName, selectedGoals, preferredTime })
-    // TODO: Save onboarding data to database
+  const handleComplete = async () => {
+    await fetch("/api/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        display_name: displayName,
+        reminder_time: preferredTime,
+        preferences: { goals: selectedGoals },
+      }),
+    })
     router.push("/")
   }
 

@@ -56,12 +56,27 @@ create table if not exists public.analytics_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text,
+  bio text,
+  avatar_url text,
+  timezone text,
+  reminder_time text,
+  theme text,
+  preferences jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists journal_entries_user_id_idx on public.journal_entries(user_id);
 create index if not exists analytics_events_user_id_idx on public.analytics_events(user_id);
+create index if not exists profiles_id_idx on public.profiles(id);
 
 -- RLS
 alter table public.journal_entries enable row level security;
 alter table public.analytics_events enable row level security;
+alter table public.profiles enable row level security;
 
 create policy "Users can read their own entries"
   on public.journal_entries for select
@@ -82,6 +97,31 @@ create policy "Users can delete their own entries"
 create policy "Users can insert analytics events"
   on public.analytics_events for insert
   with check (auth.uid() = user_id);
+
+create policy "Users can read their profile"
+  on public.profiles for select
+  using (auth.uid() = id);
+
+create policy "Users can insert their profile"
+  on public.profiles for insert
+  with check (auth.uid() = id);
+
+create policy "Users can update their profile"
+  on public.profiles for update
+  using (auth.uid() = id);
+
+create or replace function public.set_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists profiles_updated_at on public.profiles;
+create trigger profiles_updated_at
+before update on public.profiles
+for each row execute function public.set_updated_at();
 ```
 
 ## Auth Flow
@@ -94,6 +134,10 @@ create policy "Users can insert analytics events"
 - `POST /api/entries` → create entry
 - `PUT /api/entries/:id` → update entry
 - `DELETE /api/entries/:id` → delete entry
+- `GET /api/entries/:id` → fetch entry for editing
+- `GET /api/streak` → live streak stats
+- `GET /api/profile` → fetch profile
+- `PUT /api/profile` → update profile
 
 ## Tests
 Run:

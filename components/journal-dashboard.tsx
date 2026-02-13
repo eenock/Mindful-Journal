@@ -15,11 +15,26 @@ import { InsightsDashboard } from "./insights-dashboard"
 import { SettingsPage } from "./settings-page"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useEntries } from "@/hooks/use-entries"
+import type { JournalEntry } from "@/lib/types"
 
 type View = "dashboard" | "write" | "entries" | "insights" | "chat" | "settings"
 
 export function JournalDashboard() {
   const [currentView, setCurrentView] = useState<View>("dashboard")
+  const [editingEntry, setEditingEntry] = useState<JournalEntry | null>(null)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const handleEditEntry = async (entryId: string) => {
+    const response = await fetch(`/api/entries/${entryId}`)
+    if (!response.ok) return
+    const data = (await response.json()) as { entry: JournalEntry }
+    setEditingEntry(data.entry)
+    setCurrentView("write")
+  }
+
+  const handleEntrySaved = () => {
+    setRefreshKey((prev) => prev + 1)
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -151,9 +166,15 @@ export function JournalDashboard() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        {currentView === "dashboard" && <DashboardView setView={setCurrentView} />}
-        {currentView === "write" && <WriteView />}
-        {currentView === "entries" && <EntriesView />}
+        {currentView === "dashboard" && <DashboardView setView={setCurrentView} refreshKey={refreshKey} />}
+        {currentView === "write" && (
+          <WriteView
+            editingEntry={editingEntry}
+            onSaved={handleEntrySaved}
+            onCancelEdit={() => setEditingEntry(null)}
+          />
+        )}
+        {currentView === "entries" && <EntriesView onEditEntry={handleEditEntry} refreshKey={refreshKey} />}
         {currentView === "insights" && <InsightsDashboard />}
         {currentView === "chat" && <AIChat />}
         {currentView === "settings" && <SettingsPage />}
@@ -162,8 +183,8 @@ export function JournalDashboard() {
   )
 }
 
-function DashboardView({ setView }: { setView: (view: View) => void }) {
-  const { entries, loading } = useEntries({ limit: 3 })
+function DashboardView({ setView, refreshKey }: { setView: (view: View) => void; refreshKey: number }) {
+  const { entries, loading } = useEntries({ limit: 3, refreshKey })
   const latestEntry = entries[0]
   const latestMood = latestEntry?.mood ?? null
   const lastUpdated = latestEntry
@@ -250,22 +271,35 @@ function DashboardView({ setView }: { setView: (view: View) => void }) {
   )
 }
 
-function WriteView() {
+function WriteView({
+  editingEntry,
+  onSaved,
+  onCancelEdit,
+}: {
+  editingEntry: JournalEntry | null
+  onSaved: () => void
+  onCancelEdit: () => void
+}) {
   return (
     <div className="max-w-4xl mx-auto">
-      <JournalEntryEditor />
+      <JournalEntryEditor
+        key={editingEntry?.id ?? "new"}
+        initialEntry={editingEntry}
+        onSaved={onSaved}
+        onCancelEdit={onCancelEdit}
+      />
     </div>
   )
 }
 
-function EntriesView() {
+function EntriesView({ onEditEntry, refreshKey }: { onEditEntry: (id: string) => void; refreshKey: number }) {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">Your Entries</h2>
         <p className="text-muted-foreground">Browse and search through your journal history</p>
       </div>
-      <EntriesList onEditEntry={(id) => console.log("[v0] Edit entry:", id)} />
+      <EntriesList onEditEntry={onEditEntry} refreshKey={refreshKey} />
     </div>
   )
 }
